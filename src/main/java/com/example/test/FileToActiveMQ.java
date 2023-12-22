@@ -2,7 +2,6 @@ package com.example.test;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.camel.CamelContext;
-import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -17,23 +16,18 @@ public class FileToActiveMQ {
 
             ActiveMQConnectionFactory connectionFactory = createActiveMQConnectionFactory();
 
-            context.addComponent("test-jms", JmsComponent.jmsComponentAutoAcknowledge(connectionFactory));
+            context.addComponent("activemq", JmsComponent.jmsComponentAutoAcknowledge(connectionFactory));
 
             context.addRoutes(new MyRouteBuilder());
 
             context.start();
 
-            try (ProducerTemplate template = context.createProducerTemplate()) {
-                for (int i = 0; i < 10; i++) {
-                    template.sendBody("test-jms:queue:test.queue", "Test Message: " + i);
-                }
-            }
             Thread.sleep(1000);
         }
     }
 
     static ActiveMQConnectionFactory createActiveMQConnectionFactory() {
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost?broker.persistent=false");
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(ActiveMQConnectionFactory.DEFAULT_BROKER_URL);
         connectionFactory.setTrustAllPackages(false);
         connectionFactory.setTrustedPackages(singletonList("com.example.test"));
         return connectionFactory;
@@ -43,7 +37,7 @@ public class FileToActiveMQ {
 
         @Override
         public void configure() {
-            from("test-jms:queue:test.queue").to("file:target/messages");
+            from("file:sendbox").convertBodyTo(String.class).to("activemq:queue:my_queue");
         }
     }
 }
