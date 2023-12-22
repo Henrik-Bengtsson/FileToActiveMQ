@@ -2,9 +2,13 @@ package com.example.test;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.camel.CamelContext;
+import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
 import org.apache.camel.impl.DefaultCamelContext;
+
+import java.io.File;
+import java.nio.file.Files;
 
 import static java.util.Collections.singletonList;
 
@@ -21,6 +25,16 @@ public class FileToActiveMQ {
             context.addRoutes(new MyRouteBuilder());
 
             context.start();
+
+            try (ProducerTemplate template = context.createProducerTemplate()) {
+                File[] files = new File("./sendbox").listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        String fileContent = Files.readString(file.toPath());
+                        template.sendBody("activemq:queue:my_queue", fileContent);
+                    }
+                }
+            }
 
             Thread.sleep(1000);
         }
