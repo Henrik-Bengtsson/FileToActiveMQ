@@ -51,7 +51,7 @@ public class FileToActiveMQ {
 
         @Override
         public void configure() {
-            from("file:sendbox").convertBodyTo(String.class).to("activemq:queue:my_queue");
+            from("file:sendbox?noop=true").convertBodyTo(String.class).to("activemq:queue:my_queue");
         }
     }
 }
