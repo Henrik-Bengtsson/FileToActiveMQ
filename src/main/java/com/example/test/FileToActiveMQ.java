@@ -7,9 +7,6 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
 import org.apache.camel.impl.DefaultCamelContext;
 
-import java.io.File;
-import java.nio.file.Files;
-
 import static java.util.Collections.singletonList;
 
 public class FileToActiveMQ {
@@ -27,16 +24,13 @@ public class FileToActiveMQ {
             context.start();
 
             try (ProducerTemplate template = context.createProducerTemplate()) {
-                File[] files = new File("./sendbox").listFiles();
-                if (files != null) {
-                    for (File file : files) {
-                        String fileContent = Files.readString(file.toPath());
-                        template.sendBody("activemq:queue:my_queue", fileContent);
-                    }
+                for (int i = 0; i < 5; i++) {
+                    template.sendBody("file:sendbox", "Test Message: " + i);
                 }
             }
 
-            Thread.sleep(1000);
+            Thread.sleep(3000);
+
         }
     }
 
